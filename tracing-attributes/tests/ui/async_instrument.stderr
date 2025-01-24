@@ -16,7 +16,7 @@ error[E0308]: mismatched types
 10 |     ""
    |     ^^- help: try using a conversion method: `.to_string()`
    |     |
-   |     expected struct `String`, found `&str`
+   |     expected `String`, found `&str`
    |
 note: return type inferred to be `String` here
   --> tests/ui/async_instrument.rs:9:31
@@ -28,7 +28,10 @@ error[E0277]: `(&str,)` doesn't implement `std::fmt::Display`
   --> tests/ui/async_instrument.rs:14:1
    |
 14 | #[tracing::instrument]
-   | ^^^^^^^^^^^^^^^^^^^^^^ `(&str,)` cannot be formatted with the default formatter
+   | ^^^^^^^^^^^^^^^^^^^^^^
+   | |
+   | `(&str,)` cannot be formatted with the default formatter
+   | return type was inferred to be `(&str,)` here
    |
    = help: the trait `std::fmt::Display` is not implemented for `(&str,)`
    = note: in format strings you may be able to use `{:?}` (or {:#?} for pretty-print) instead
@@ -47,7 +50,7 @@ error[E0308]: mismatched types
   --> tests/ui/async_instrument.rs:23:5
    |
 23 |     ""
-   |     ^^ expected struct `Wrapper`, found `&str`
+   |     ^^ expected `Wrapper<_>`, found `&str`
    |
    = note: expected struct `Wrapper<_>`
            found reference `&'static str`
@@ -79,7 +82,7 @@ error[E0308]: mismatched types
 36 |         return "";
    |                ^^- help: try using a conversion method: `.to_string()`
    |                |
-   |                expected struct `String`, found `&str`
+   |                expected `String`, found `&str`
    |
 note: return type inferred to be `String` here
   --> tests/ui/async_instrument.rs:34:28

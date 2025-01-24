@@ -191,7 +191,7 @@ pub struct Kind(u8);
 ///         // ...
 ///         # drop(span); Id::from_u64(1)
 ///     }
-
+///
 ///     fn event(&self, event: &Event<'_>) {
 ///         // ...
 ///         # drop(event);
@@ -223,10 +223,9 @@ pub struct Level(LevelInner);
 
 /// A filter comparable to a verbosity [`Level`].
 ///
-/// If a [`Level`] is considered less than a `LevelFilter`, it should be
-/// considered enabled; if greater than or equal to the `LevelFilter`,
-/// that level is disabled. See [`LevelFilter::current`] for more
-/// details.
+/// If a [`Level`] is considered less than or equal to a `LevelFilter`, it
+/// should be considered enabled; if greater than the `LevelFilter`, that level
+/// is disabled. See [`LevelFilter::current`] for more details.
 ///
 /// Note that this is essentially identical to the `Level` type, but with the
 /// addition of an [`OFF`] level that completely disables all trace
@@ -274,6 +273,7 @@ impl<'a> Metadata<'a> {
     }
 
     /// Returns the names of the fields on the described span or event.
+    #[inline]
     pub fn fields(&self) -> &field::FieldSet {
         &self.fields
     }
@@ -333,7 +333,7 @@ impl<'a> Metadata<'a> {
     }
 }
 
-impl<'a> fmt::Debug for Metadata<'a> {
+impl fmt::Debug for Metadata<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut meta = f.debug_struct("Metadata");
         meta.field("name", &self.name)
@@ -378,7 +378,7 @@ impl Kind {
     pub const SPAN: Kind = Kind(Self::SPAN_BIT);
 
     /// `enabled!` callsite. [`Collect`][`crate::collect::Collect`]s can assume
-    /// this `Kind` means they will never recieve a
+    /// this `Kind` means they will never receive a
     /// full event with this [`Metadata`].
     pub const HINT: Kind = Kind(Self::HINT_BIT);
 
@@ -441,9 +441,9 @@ impl fmt::Debug for Kind {
     }
 }
 
-impl<'a> Eq for Metadata<'a> {}
+impl Eq for Metadata<'_> {}
 
-impl<'a> PartialEq for Metadata<'a> {
+impl PartialEq for Metadata<'_> {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
         if core::ptr::eq(&self, &other) {

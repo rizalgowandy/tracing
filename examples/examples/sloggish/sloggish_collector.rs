@@ -1,3 +1,5 @@
+//! NOTE: This is pre-release documentation for the upcoming tracing 0.2.0 ecosystem. For the
+//! release examples, please see the `v0.1.x` branch instead.
 use nu_ansi_term::{Color, Style};
 use tracing::{
     field::{Field, Visit},
@@ -27,7 +29,7 @@ pub struct CurrentSpanPerThread {
 impl CurrentSpanPerThread {
     pub fn new() -> Self {
         thread_local! {
-            static CURRENT: RefCell<Vec<Id>> = RefCell::new(vec![]);
+            static CURRENT: RefCell<Vec<Id>> = const { RefCell::new(Vec::new()) };
         };
         Self { current: &CURRENT }
     }
@@ -76,7 +78,7 @@ struct Event<'a> {
 
 struct ColorLevel<'a>(&'a Level);
 
-impl<'a> fmt::Display for ColorLevel<'a> {
+impl fmt::Display for ColorLevel<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self.0 {
             Level::TRACE => Color::Purple.paint("TRACE"),
@@ -107,7 +109,7 @@ impl Visit for Span {
     }
 }
 
-impl<'a> Visit for Event<'a> {
+impl Visit for Event<'_> {
     fn record_debug(&mut self, field: &Field, value: &dyn fmt::Debug) {
         write!(
             &mut self.stderr,
@@ -230,6 +232,7 @@ impl Collect for SloggishCollector {
             self.print_indent(&mut stderr, indent).unwrap();
             stack.push(span_id.clone());
             if let Some(data) = data {
+                #[allow(clippy::map_identity)] // TODO remove in Rust 1.77
                 self.print_kvs(&mut stderr, data.kvs.iter().map(|(k, v)| (k, v)), "")
                     .unwrap();
             }

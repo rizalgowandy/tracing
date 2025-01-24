@@ -205,9 +205,11 @@ enum Kind<T> {
 
 #[cfg(feature = "std")]
 thread_local! {
-    static CURRENT_STATE: State = State {
-        default: RefCell::new(None),
-        can_enter: Cell::new(true),
+    static CURRENT_STATE: State = const {
+        State {
+            default: RefCell::new(None),
+            can_enter: Cell::new(true),
+        }
     };
 }
 
@@ -434,7 +436,7 @@ where
     // the default dispatcher will not be able to access the dispatch context.
     // Dropping the guard will allow the dispatch context to be re-entered.
     struct Entered<'a>(&'a Cell<bool>);
-    impl<'a> Drop for Entered<'a> {
+    impl Drop for Entered<'_> {
         #[inline]
         fn drop(&mut self) {
             self.0.set(true);
@@ -508,6 +510,7 @@ pub(crate) fn get_global() -> &'static Dispatch {
     unsafe {
         // This is safe given the invariant that setting the global dispatcher
         // also sets `GLOBAL_INIT` to `INITIALIZED`.
+        #[allow(static_mut_refs)]
         &GLOBAL_DISPATCH
     }
 }
@@ -1036,7 +1039,7 @@ impl<'a> Entered<'a> {
 }
 
 #[cfg(feature = "std")]
-impl<'a> Drop for Entered<'a> {
+impl Drop for Entered<'_> {
     #[inline]
     fn drop(&mut self) {
         self.0.can_enter.set(true);

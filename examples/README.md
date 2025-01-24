@@ -46,11 +46,11 @@ This directory contains a collection of examples that demonstrate the use of the
   + `futures-proxy-server`: Demonstrates the use of `tracing-futures` by
     implementing a simple proxy server, based on [this example][tokio-proxy]
     from `tokio`.
-  + `async_fn`: Demonstrates how asynchronous functions can be
+  + `async-fn`: Demonstrates how asynchronous functions can be
      instrumented.
   + `echo`: Demonstrates a `tracing`-instrumented variant of Tokio's `echo` example.
 - **tracing-flame**:
-  + `infero-flame`: Demonstrates the use of `tracing-flame` to generate a flamegraph
+  + `inferno-flame`: Demonstrates the use of `tracing-flame` to generate a flamegraph
      from spans.
 - **tracing-tower**:
   + `tower-client`: Demonstrates the use of `tracing-tower` to instrument a
@@ -65,12 +65,6 @@ This directory contains a collection of examples that demonstrate the use of the
     unstructured logs from dependencies as `tracing` events, by instrumenting
     [this example][echo] from `hyper`, and using `tracing-log` to record logs
     emitted by `hyper`.
-- **tracing-opentelemetry**:
-  + `opentelemetry`: Demonstrates how `tracing-opentelemetry` can be used to
-    export and visualize `tracing` span data.
-  + `opentelemetry-remote-context`: Demonstrates how `tracing-opentelemetry`
-    can be used to extract and inject remote context when traces span multiple
-    systems.
 
 [tasks]: (https://docs.rs/tokio/0.2.21/tokio/task/index.html)
 [tokio-proxy]: https://github.com/tokio-rs/tokio/blob/v0.1.x/tokio/examples/proxy.rs

@@ -333,9 +333,8 @@ pub struct FieldFnVisitor<'a, F> {
 /// The compact format includes fields from all currently entered spans, after
 /// the event's fields. Span fields are ordered (but not grouped) grouped by
 /// span, and span names are  not shown.A more compact representation of the
-/// event's [`Level`](tracing::Level) is used, and additional information, such
-/// as the event's target, is disabled by default (but can be enabled
-/// explicitly).
+/// event's [`Level`] is used, and additional information, such as the event's
+/// target, is disabled by default (but can be enabled explicitly).
 ///
 /// # Example Output
 ///
@@ -423,7 +422,19 @@ impl<'writer> Writer<'writer> {
     // We may not want to do that if we choose to expose specialized
     // constructors instead (e.g. `from_string` that stores whether the string
     // is empty...?)
-    pub(crate) fn new(writer: &'writer mut impl fmt::Write) -> Self {
+    //(@kaifastromai) I suppose having dedicated constructors may have certain benefits
+    // but I am not privy to the larger direction of tracing/subscriber.
+    /// Create a new [`Writer`] from any type that implements [`fmt::Write`].
+    ///
+    /// The returned `Writer` value may be passed as an argument to methods
+    /// such as [`Format::format_event`]. Since constructing a `Writer`
+    /// mutably borrows the underlying [`fmt::Write`] instance, that value may
+    /// be accessed again once the `Writer` is dropped. For example, if the
+    /// value implementing [`fmt::Write`] is a [`String`], it will contain
+    /// the formatted output of [`Format::format_event`], which may then be
+    /// used for other purposes.
+    #[must_use]
+    pub fn new(writer: &'writer mut impl fmt::Write) -> Self {
         Self {
             writer: writer as &mut dyn fmt::Write,
             is_ansi: false,
@@ -667,8 +678,7 @@ impl<F, T> Format<F, T> {
     /// # Options
     ///
     /// - [`Format::flatten_event`] can be used to enable flattening event fields into the root
-    /// object.
-    ///
+    ///   object.
     #[cfg(feature = "json")]
     #[cfg_attr(docsrs, doc(cfg(feature = "json")))]
     pub fn json(self) -> Format<Json, T> {
@@ -1067,7 +1077,12 @@ where
 
         let dimmed = writer.dimmed();
         if self.display_target {
-            write!(writer, "{}{}", dimmed.paint(meta.target()), dimmed.paint(":"))?;
+            write!(
+                writer,
+                "{}{}",
+                dimmed.paint(meta.target()),
+                dimmed.paint(":")
+            )?;
         }
 
         if self.display_filename {
@@ -1186,7 +1201,7 @@ impl<'a> DefaultVisitor<'a> {
     }
 }
 
-impl<'a> field::Visit for DefaultVisitor<'a> {
+impl field::Visit for DefaultVisitor<'_> {
     fn record_str(&mut self, field: &Field, value: &str) {
         if self.result.is_err() {
             return;
@@ -1223,12 +1238,20 @@ impl<'a> field::Visit for DefaultVisitor<'a> {
             return;
         }
 
+        let name = field.name();
+
+        // Skip fields that are actually log metadata that have already been handled
+        #[cfg(feature = "tracing-log")]
+        if name.starts_with("log.") {
+            debug_assert_eq!(self.result, Ok(())); // no need to update self.result
+            return;
+        }
+
+        // emit separating spaces if needed
         self.maybe_pad();
-        self.result = match field.name() {
+
+        self.result = match name {
             "message" => write!(self.writer, "{:?}", value),
-            // Skip fields that are actually log metadata that have already been handled
-            #[cfg(feature = "tracing-log")]
-            name if name.starts_with("log.") => Ok(()),
             name if name.starts_with("r#") => write!(
                 self.writer,
                 "{}{}{:?}",
@@ -1247,13 +1270,13 @@ impl<'a> field::Visit for DefaultVisitor<'a> {
     }
 }
 
-impl<'a> crate::field::VisitOutput<fmt::Result> for DefaultVisitor<'a> {
+impl crate::field::VisitOutput<fmt::Result> for DefaultVisitor<'_> {
     fn finish(self) -> fmt::Result {
         self.result
     }
 }
 
-impl<'a> crate::field::VisitFmt for DefaultVisitor<'a> {
+impl crate::field::VisitFmt for DefaultVisitor<'_> {
     fn writer(&mut self) -> &mut dyn fmt::Write {
         &mut self.writer
     }
@@ -1262,7 +1285,7 @@ impl<'a> crate::field::VisitFmt for DefaultVisitor<'a> {
 /// Renders an error into a list of sources, *including* the error
 struct ErrorSourceList<'a>(&'a (dyn std::error::Error + 'static));
 
-impl<'a> Display for ErrorSourceList<'a> {
+impl Display for ErrorSourceList<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut list = f.debug_list();
         let mut curr = Some(self.0);
@@ -1306,7 +1329,7 @@ impl<'a> FmtThreadName<'a> {
     }
 }
 
-impl<'a> fmt::Display for FmtThreadName<'a> {
+impl fmt::Display for FmtThreadName<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use std::sync::atomic::{
             AtomicUsize,
@@ -1466,7 +1489,7 @@ where
     }
 }
 
-impl<'a, F> fmt::Debug for FieldFnVisitor<'a, F> {
+impl<F> fmt::Debug for FieldFnVisitor<'_, F> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("FieldFnVisitor")
             .field("f", &format_args!("{}", std::any::type_name::<F>()))
@@ -1732,7 +1755,7 @@ pub(super) mod test {
             "^fake time tracing_subscriber::fmt::format::test: {}:[0-9]+: hello\n$",
             current_path()
                 // if we're on Windows, the path might contain backslashes, which
-                // have to be escpaed before compiling the regex.
+                // have to be escaped before compiling the regex.
                 .replace('\\', "\\\\")
         ))
         .unwrap();

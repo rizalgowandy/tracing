@@ -120,7 +120,7 @@ pub trait LookupSpan<'a> {
     /// should only implement `span_data`.
     ///
     /// [`span_data`]: LookupSpan::span_data()
-    fn span(&'a self, id: &Id) -> Option<SpanRef<'_, Self>>
+    fn span(&'a self, id: &Id) -> Option<SpanRef<'a, Self>>
     where
         Self: Sized,
     {
@@ -205,11 +205,9 @@ pub trait SpanData<'a> {
 
 /// A reference to [span data] and the associated [registry].
 ///
-/// This type implements all the same methods as [`SpanData`][span data], and
-/// provides additional methods for querying the registry based on values from
-/// the span.
+/// This type implements all the same methods as [`SpanData`], and provides
+/// additional methods for querying the registry based on values from the span.
 ///
-/// [span data]: SpanData
 /// [registry]: LookupSpan
 #[derive(Debug)]
 pub struct SpanRef<'a, R: LookupSpan<'a>> {
@@ -270,7 +268,7 @@ feature! {
             self.as_ref().span_data(id)
         }
 
-        fn span(&'a self, id: &Id) -> Option<SpanRef<'_, Self>>
+        fn span(&'a self, id: &Id) -> Option<SpanRef<'a, Self>>
         where
             Self: Sized,
         {
@@ -300,7 +298,7 @@ feature! {
             self.as_ref().span_data(id)
         }
 
-        fn span(&'a self, id: &Id) -> Option<SpanRef<'_, Self>>
+        fn span(&'a self, id: &Id) -> Option<SpanRef<'a, Self>>
         where
             Self: Sized,
         {
@@ -468,7 +466,6 @@ where
 
     /// Returns a `SpanRef` describing this span's parent, or `None` if this
     /// span is the root of its trace tree.
-
     pub fn parent(&self) -> Option<Self> {
         let id = self.data.parent()?;
         let data = self.registry.span_data(id)?;

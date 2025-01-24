@@ -16,7 +16,7 @@
 //! - An [`env_logger`] module, with helpers for using the [`env_logger` crate]
 //!   with `tracing` (optional, enabled by the `env-logger` feature).
 //!
-//! *Compiler support: [requires `rustc` 1.49+][msrv]*
+//! *Compiler support: [requires `rustc` 1.63+][msrv]*
 //!
 //! [msrv]: #supported-rust-versions
 //!
@@ -76,14 +76,14 @@
 //! ## Supported Rust Versions
 //!
 //! Tracing is built against the latest stable release. The minimum supported
-//! version is 1.49. The current Tracing version is not guaranteed to build on
+//! version is 1.63. The current Tracing version is not guaranteed to build on
 //! Rust versions earlier than the minimum supported version.
 //!
 //! Tracing follows the same compiler support policies as the rest of the Tokio
 //! project. The current stable Rust compiler and the three most recent minor
 //! versions before it will always be supported. For example, if the current
-//! stable compiler version is 1.45, the minimum supported version will not be
-//! increased past 1.42, three minor versions prior. Increasing the minimum
+//! stable compiler version is 1.69, the minimum supported version will not be
+//! increased past 1.66, three minor versions prior. Increasing the minimum
 //! supported compiler version is not considered a semver breaking change as
 //! long as doing so complies with this policy.
 //!
@@ -115,7 +115,8 @@
     overflowing_literals,
     path_statements,
     patterns_in_fns_without_body,
-    private_in_public,
+    private_interfaces,
+    private_bounds,
     unconditional_recursion,
     unused,
     unused_allocation,
@@ -208,7 +209,7 @@ pub trait AsTrace: crate::sealed::Sealed {
     fn as_trace(&self) -> Self::Trace;
 }
 
-impl<'a> crate::sealed::Sealed for Metadata<'a> {}
+impl crate::sealed::Sealed for Metadata<'_> {}
 
 impl<'a> AsLog for Metadata<'a> {
     type Log = log::Metadata<'a>;
@@ -219,7 +220,7 @@ impl<'a> AsLog for Metadata<'a> {
             .build()
     }
 }
-impl<'a> crate::sealed::Sealed for log::Metadata<'a> {}
+impl crate::sealed::Sealed for log::Metadata<'_> {}
 
 impl<'a> AsTrace for log::Metadata<'a> {
     type Trace = Metadata<'a>;
@@ -280,9 +281,9 @@ macro_rules! log_cs {
             "log event",
             "log",
             $level,
-            None,
-            None,
-            None,
+            ::core::option::Option::None,
+            ::core::option::Option::None,
+            ::core::option::Option::None,
             field::FieldSet::new(FIELD_NAMES, identify_callsite!(&$cs)),
             Kind::EVENT,
         );
@@ -349,7 +350,7 @@ fn loglevel_to_cs(
     }
 }
 
-impl<'a> crate::sealed::Sealed for log::Record<'a> {}
+impl crate::sealed::Sealed for log::Record<'_> {}
 
 impl<'a> AsTrace for log::Record<'a> {
     type Trace = Metadata<'a>;
@@ -460,7 +461,7 @@ pub trait NormalizeEvent<'a>: crate::sealed::Sealed {
     fn is_log(&self) -> bool;
 }
 
-impl<'a> crate::sealed::Sealed for Event<'a> {}
+impl crate::sealed::Sealed for Event<'_> {}
 
 impl<'a> NormalizeEvent<'a> for Event<'a> {
     fn normalized_metadata(&'a self) -> Option<Metadata<'a>> {
@@ -512,7 +513,7 @@ impl<'a> LogVisitor<'a> {
     }
 }
 
-impl<'a> Visit for LogVisitor<'a> {
+impl Visit for LogVisitor<'_> {
     fn record_debug(&mut self, _field: &Field, _value: &dyn fmt::Debug) {}
 
     fn record_u64(&mut self, field: &Field, value: u64) {
